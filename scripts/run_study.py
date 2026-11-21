@@ -156,7 +156,7 @@ def job_synthetic(spec: dict) -> dict:
 
 # ----------------------------------------------------------------------------- job lists
 def jobs_for(exp: str, cfg: dict, methods: list[str] | None) -> list[dict]:
-    ms = methods or cfg["methods"]
+    ms = methods or cfg.get("methods", [])
     R = paths.RESULTS
     if exp == "main":
         return [{"fn": "real", "method": m, "out": str(R / "main" / f"{m}.pkl"), "experiment": "real/main",
@@ -245,6 +245,8 @@ def main() -> None:
         cfg, p, _ = real_inputs()
         fp = study.data_fingerprint(p)
     jobs = jobs_for(a.experiment, cfg or {}, a.methods)
+    heavy = {"RF": 0, "GBM": 1}                       # longest jobs first so the pool drains evenly
+    jobs.sort(key=lambda j: heavy.get(j.get("method"), 2))
     todo = [j for j in jobs if a.force or not done(j)]
     print(f"{a.experiment}: {len(jobs)} jobs, {len(todo)} to run", flush=True)
     reg = Registry()
