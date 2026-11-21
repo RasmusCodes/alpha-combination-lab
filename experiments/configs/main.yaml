@@ -1,0 +1,38 @@
+# Frozen configuration of the confirmatory real-data study. Written and committed before any return-based result
+# was computed (see experiments/preregistration.md and the git history). A run with any other setting is recorded
+# in the registry as 'exploratory'.
+experiment: real/main
+panel_start: "1967-01-31"        # every signal has history by then (LTREV and SEAS need five years)
+panel_end: "2024-12-31"          # legacy CRSP files end here; the last formation month with an outcome is 2024-11
+signals: [MOM, IMOM, HIGH52, STREV, LTREV, BM, EP, CFP, GPA, ROA, ACC, AG, NSI, IVOL, BETA, SEAS]
+normalization: {winsor: 0.01, method: rank_gauss, missing: zero, min_n: 20}
+walk_forward:
+  first_test: "1980-01-31"       # 13 years of training at the first refit
+  last_test: "2024-11-30"        # 539 out-of-sample months
+  refit_every: 12                # parameters re-estimated every January
+  tune_every: 60                 # hyperparameters re-selected every five years (1980, 1985, ...)
+  horizon: 1
+  embargo: 1
+  window: null                   # expanding
+  min_train: 120
+  inner: forward                 # nested selection on validation blocks at the end of each training window
+  inner_folds: 3
+  inner_block: 36
+  inner_embargo: 1
+  rule: best
+  importance: true
+  seed: 20261121
+methods: [EW, HEW, ICW, OLS, RIDGE, LASSO, ENET, PCR, MVO, BMA, BSHRINK, RF, GBM, DMA, REGIME, ONLINE_EG, ONLINE_RLS]
+simple_methods: [EW, HEW, ICW]   # not counted as "complex" in the decision rule
+method_params:
+  RF: {trees: 200, min_leaf: 100, bagging_fraction: 0.1, feature_fraction: 0.5, n_jobs: 2}
+  GBM: {learning_rate: 0.05, min_leaf: 200, l2: 10.0, feature_fraction: 0.8, bagging_fraction: 0.5, n_jobs: 2}
+  DMA: {lam: 0.99, alpha: 0.99}
+benchmark: EW
+portfolio: {scheme: rank, quantile: 0.2}
+costs: {base_multiplier: 1.0, high_multiplier: 2.0, impact_y: 1.0, aum_grid: [1.0e7, 1.0e8, 1.0e9, 1.0e10, 1.0e11]}
+inference: {bootstrap: 5000, block: 6, alpha: 0.05}
+subperiods:
+  - ["1980-01-31", "1999-12-31"]
+  - ["2000-01-31", "2014-12-31"]
+  - ["2015-01-31", "2024-11-30"]

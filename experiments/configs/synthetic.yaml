@@ -1,0 +1,24 @@
+# E1 positive controls on synthetic panels with a known truth (registry kind 'development').
+experiment: synthetic/positive_controls
+dgps: [linear_equal, linear_unequal, sparse, wrong_sign, nonlinear, regime, decay]
+ics: [0.03, 0.10]
+seeds: [101, 102, 103]
+panel: {n_assets: 300, n_months: 360, family_sizes: [3, 3, 3, 3], rho_within: 0.6, rho_between: 0.1,
+        persistence: 0.8, factor_share: 0.3}
+walk_forward:
+  first_test: 120                # month index (10 years of training)
+  refit_every: 12
+  tune_every: 60
+  horizon: 1
+  embargo: 1
+  min_train: 60
+  inner: forward
+  inner_folds: 3
+  inner_block: 24
+  inner_embargo: 1
+  rule: best
+  seed: 7
+methods: [EW, HEW, ICW, OLS, RIDGE, LASSO, ENET, PCR, MVO, BMA, BSHRINK, RF, GBM, DMA, REGIME, ONLINE_EG, ONLINE_RLS]
+method_params:
+  RF: {trees: 100, min_leaf: 100, bagging_fraction: 0.2, feature_fraction: 0.5, n_jobs: 2}
+  GBM: {learning_rate: 0.05, min_leaf: 200, l2: 10.0, feature_fraction: 0.8, bagging_fraction: 0.5, n_jobs: 2}

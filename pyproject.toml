@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphacomb"
+version = "0.1.0"
+description = "Alpha Combination and Meta-Modeling Lab: combining noisy, correlated return signals out of sample"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scipy>=1.12",
+    "scikit-learn>=1.5",
+    "lightgbm>=4.3",
+    "pyarrow>=15",
+    "matplotlib>=3.8",
+    "PyYAML>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+wrds = ["sqlalchemy>=2", "psycopg2-binary>=2.9"]
+
+[project.scripts]
+alphacomb = "alphacomb.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
