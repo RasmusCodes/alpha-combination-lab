@@ -38,6 +38,18 @@ def _jsonable(x):
     return x
 
 
+def redact(text: str) -> str:
+    """Strip machine-specific paths from free text (tracebacks in failure notes): the repository root becomes
+    <repo> and the home directory ~, in both slash styles and in JSON-escaped form."""
+    if not text:
+        return text
+    home = str(Path.home())
+    for root, tag in ((str(paths.ROOT), "<repo>"), (home, "~")):
+        for variant in (root, root.replace("\\", "/"), root.replace("\\", "\\\\")):
+            text = text.replace(variant, tag)
+    return text
+
+
 def config_hash(cfg: dict) -> str:
     return hashlib.sha256(json.dumps(_jsonable(cfg), sort_keys=True).encode()).hexdigest()[:12]
 
@@ -80,12 +92,12 @@ class Registry:
         self._append({"event": "started", "run_id": run_id, "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
                       "experiment": experiment, "hypotheses": list(hypotheses), "kind": kind, "config": config,
                       "config_hash": config_hash(config), "git": git_state(), "data": data_fingerprint,
-                      "counts_as_trial": counts_as_trial, "notes": notes})
+                      "counts_as_trial": counts_as_trial, "notes": redact(notes)})
         return run_id
 
     def finish(self, run_id: str, status: str = "completed", results: dict | None = None, notes: str = "") -> None:
         self._append({"event": status, "run_id": run_id, "time": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                      "results": results or {}, "notes": notes})
+                      "results": results or {}, "notes": redact(notes)})
 
     def events(self) -> list[dict]:
         if not self.path.exists():

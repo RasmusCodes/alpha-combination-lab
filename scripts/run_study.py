@@ -17,6 +17,7 @@ import sys
 import time
 import traceback
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from pathlib import Path
 
 import numpy as np
@@ -255,11 +256,15 @@ def main() -> None:
         ids[id(j)] = reg.start(j["experiment"], run_config(j, cfg, fp), j["hyp"], a.kind or j["kind"],
                                data_fingerprint=fp)
     t0 = time.time()
+    broken = False
     with ProcessPoolExecutor(max_workers=a.workers) as ex:
         futs = {ex.submit(_run, j): j for j in todo}
         for f in as_completed(futs):
             j = futs[f]
-            spec, summary, err = f.result()
+            try:
+                spec, summary, err = f.result()
+            except BrokenProcessPool as e:      # a worker was killed (on this shared machine: out of memory)
+                summary, err, broken = None, f"worker pool broken, job not finished: {e!r}", True
             if err:
                 reg.finish(ids[id(j)], status="failed", notes=err[-2000:])
                 print(f"FAILED {j.get('method', j.get('dgp'))}: {err[-600:]}", flush=True)
@@ -267,7 +272,9 @@ def main() -> None:
                 reg.finish(ids[id(j)], results=summary)
                 tag = j.get("method") or f"{j['dgp']} ic={j['ic']} s={j['seed']}"
                 print(f"done {tag} {j.get('fixed', '')} [{time.time() - t0:.0f}s] {summary}", flush=True)
-    print(f"{a.experiment} finished in {time.time() - t0:.0f}s", flush=True)
+    print(f"{a.experiment} finished in {time.time() - t0:.0f}s{' (pool broken: rerun to resume)' if broken else ''}",
+          flush=True)
+    return 3 if broken else 0
 
 
 if __name__ == "__main__":

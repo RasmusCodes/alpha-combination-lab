@@ -78,14 +78,17 @@ def max_drawdown(r: np.ndarray) -> float:
 
 # ----------------------------------------------------------------------------- bootstrap
 def stationary_indices(T: int, block: float, rng: np.random.Generator) -> np.ndarray:
+    """Indices of one stationary-bootstrap resample: a new block starts with probability 1/block (wrapping around
+    the end), otherwise the next observation follows. Vectorized; same draws as the obvious loop."""
     p = 1.0 / max(block, 1.0)
-    idx = np.empty(T, dtype=np.int64)
-    idx[0] = rng.integers(T)
+    first = rng.integers(T)
     jumps = rng.random(T) < p
     starts = rng.integers(T, size=T)
-    for t in range(1, T):
-        idx[t] = starts[t] if jumps[t] else (idx[t - 1] + 1) % T
-    return idx
+    starts[0] = first
+    jumps[0] = True
+    t = np.arange(T)
+    j = np.maximum.accumulate(np.where(jumps, t, 0))
+    return (starts[j] + (t - j)) % T
 
 
 def bootstrap(stat_fn, data: np.ndarray, B: int = 2000, block: float = 6, seed: int = 0) -> np.ndarray:

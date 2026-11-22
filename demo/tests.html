@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engine parity tests</title>
+<style>
+  body { font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; margin: 24px; color: #1a1a18; background: #fbfaf6; }
+  table { border-collapse: collapse; } td, th { padding: 4px 10px; border-bottom: 1px solid #e6e2d8; text-align: left; }
+  .pass { color: #157347; font-weight: 600; } .fail { color: #b42318; font-weight: 600; }
+  code { font-family: ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<h1>Browser engine vs Python library</h1>
+<p>Runs <code>engine.js</code> on <code>fixtures/parity.json</code> (written by <code>scripts/export_demo_fixtures.py</code>)
+and compares fitted weights and walk-forward forecasts with the Python implementation.</p>
+<p id="summary">Running...</p>
+<table><thead><tr><th>Check</th><th>Max abs difference</th><th>Result</th></tr></thead><tbody id="rows"></tbody></table>
+<script type="module" src="./tests.js"></script>
+</body>
+</html>

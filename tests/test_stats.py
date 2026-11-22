@@ -4,6 +4,22 @@ import pytest
 from alphacomb.evaluation import portfolio, stats
 
 
+def test_stationary_indices_match_reference_loop():
+    def loop(T, block, rng):
+        p = 1.0 / block
+        idx = np.empty(T, dtype=np.int64)
+        idx[0] = rng.integers(T)
+        jumps = rng.random(T) < p
+        starts = rng.integers(T, size=T)
+        for t in range(1, T):
+            idx[t] = starts[t] if jumps[t] else (idx[t - 1] + 1) % T
+        return idx
+    for seed in range(5):
+        a = stats.stationary_indices(97, 6, np.random.default_rng(seed))
+        b = loop(97, 6, np.random.default_rng(seed))
+        assert np.array_equal(a, b)
+
+
 def test_holm_and_bh_known_values():
     p = np.array([0.01, 0.04, 0.03, 0.005])
     assert np.allclose(stats.holm(p), [0.03, 0.06, 0.06, 0.02])
@@ -87,6 +103,20 @@ def test_portfolio_weights_turnover_and_drift():
     assert np.isclose(turn3[1], 0.5 * (abs(w3[3]) + abs(w3[7])))
     cost = portfolio.trade_costs(tr3, np.full(8, 0.001), 2)
     assert np.isclose(cost[1], 2 * turn3[1] * 0.001)
+
+
+def test_registry_redacts_local_paths(tmp_path):
+    from pathlib import Path
+
+    from alphacomb import paths
+    from alphacomb.registry import Registry, redact
+    tb = f'File "{paths.ROOT}\\scripts\\x.py", line 1; File "{Path.home()}\\lib\\y.py"'
+    out = redact(tb)
+    assert str(paths.ROOT) not in out and str(Path.home()) not in out and "<repo>" in out
+    reg = Registry(tmp_path / "r.jsonl")
+    rid = reg.start("x", {"a": 1}, kind="development")
+    reg.finish(rid, status="failed", notes=tb)
+    assert str(Path.home()) not in (tmp_path / "r.jsonl").read_text()
 
 
 def test_registry_counts_distinct_trials(tmp_path):

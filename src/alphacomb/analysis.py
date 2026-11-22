@@ -38,13 +38,14 @@ class Evaluated:
     """Everything derived from one forecast vector over a set of OOS months."""
 
     def __init__(self, name: str, pred: np.ndarray, p: Panel, months: np.ndarray, weights: np.ndarray | None = None,
-                 cost_mult: float = 1.0):
+                 cost_mult: float = 1.0, keep_trades: bool = True):
         self.name, self.pred, self.months = name, pred, np.asarray(months)
         self.ic = metrics.monthly_ic(pred, p.ret, p.offsets, months=self.months)
         self.pic = metrics.monthly_ic(pred, p.ret, p.offsets, months=self.months, rank=False)
         ev = portfolio.evaluate(pred, p, self.months, p.extras["cost"] * cost_mult)
-        self.w, self.gross, self.turnover, self.cost, self.trades = (ev["weights"], ev["gross"], ev["turnover"],
-                                                                      ev["cost"], ev["trades"])
+        # month-level series only (row-level portfolio weights are dropped to keep memory small)
+        self.gross, self.turnover, self.cost = ev["gross"], ev["turnover"], ev["cost"]
+        self.trades = ev["trades"] if keep_trades else None
         self.net = ev["net"]
         self.net_high = self.gross - 2 * self.cost
         q = portfolio.evaluate(pred, p, self.months, p.extras["cost"] * cost_mult, scheme="quantile", q=0.2)
