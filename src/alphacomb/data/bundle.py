@@ -32,6 +32,19 @@ class CRSPBundle:
         return pd.read_parquet(self.dir / "funda_annual.parquet")
 
     @cached_property
+    def ibes_fy1(self) -> pd.DataFrame:
+        """Monthly FY1 consensus per PERMNO (extension; built by scripts/build_extension.py)."""
+        return pd.read_parquet(self.dir / "ibes_fy1.parquet")
+
+    @cached_property
+    def ibes_sue(self) -> pd.DataFrame:
+        return pd.read_parquet(self.dir / "ibes_surprises.parquet")
+
+    @cached_property
+    def om_iv(self) -> pd.DataFrame:
+        return pd.read_parquet(self.dir / "om_iv.parquet")
+
+    @cached_property
     def months(self) -> pd.DatetimeIndex:
         lo, hi = self.monthly["month"].min(), self.monthly["month"].max()
         return pd.date_range(lo, hi, freq="ME")

@@ -30,7 +30,7 @@ def load_config(name: str = "main") -> dict:
 
 
 def build_panel(cfg: dict) -> Panel:
-    frame = pd.read_parquet(paths.PROCESSED / "panel.parquet")
+    frame = pd.read_parquet(paths.PROCESSED / cfg.get("panel_file", "panel.parquet"))
     frame = frame[(frame["date"] >= cfg["panel_start"]) & (frame["date"] <= cfg["panel_end"])]
     names = cfg["signals"]
     specs = [registry.get(n).spec for n in names]

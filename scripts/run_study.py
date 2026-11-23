@@ -38,19 +38,21 @@ CACHE = paths.RESULTS / "cache"
 _INPUTS: dict = {}
 
 
-def real_inputs():
-    """The frozen panel and its moments (built once, then loaded from results/cache; once per worker process)."""
-    if "real" not in _INPUTS:
-        cfg = study.load_config("main")
-        pk = CACHE / "panel_main.pkl"
+def real_inputs(config: str = "main"):
+    """A configuration's panel and moments (built once, then loaded from results/cache; once per worker process).
+    'main' is the frozen confirmatory study; other configurations (experiments/configs/<name>.yaml) reuse its
+    protocol with their own signal set and windows."""
+    if config not in _INPUTS:
+        cfg = study.load_config(config)
+        pk = CACHE / f"panel_{config}.pkl"
         if pk.exists():
             p = study.load(pk)
         else:
             p = study.build_panel(cfg)
             study.save(p, pk)
-        mom = study.moments_for(p, CACHE / "moments_main.pkl")
-        _INPUTS["real"] = (cfg, p, mom)
-    return _INPUTS["real"]
+        mom = study.moments_for(p, CACHE / f"moments_{config}.pkl")
+        _INPUTS[config] = (cfg, p, mom)
+    return _INPUTS[config]
 
 
 def summarize(res, p, months=None) -> dict:
@@ -74,7 +76,7 @@ def series(res, p) -> dict:
 
 # ----------------------------------------------------------------------------- job bodies (run in workers)
 def job_real(spec: dict) -> dict:
-    cfg, p, mom = real_inputs()
+    cfg, p, mom = real_inputs(spec.get("config", "main"))
     name = spec["method"]
     proto = models.make(name, **cfg["method_params"].get(name, {}))
     wf = study.wf_config(cfg, **spec.get("wf", {}))
@@ -156,10 +158,14 @@ def job_synthetic(spec: dict) -> dict:
 
 
 # ----------------------------------------------------------------------------- job lists
-def jobs_for(exp: str, cfg: dict, methods: list[str] | None) -> list[dict]:
+def jobs_for(exp: str, cfg: dict, methods: list[str] | None, config: str = "main") -> list[dict]:
     ms = methods or cfg.get("methods", [])
     R = paths.RESULTS
     if exp == "main":
+        if config != "main":
+            return [{"fn": "real", "method": m, "config": config, "out": str(R / config / f"{m}.pkl"),
+                     "experiment": f"real/{config}", "kind": "confirmatory", "hyp": cfg.get("hypotheses", [])}
+                    for m in ms]
         return [{"fn": "real", "method": m, "out": str(R / "main" / f"{m}.pkl"), "experiment": "real/main",
                  "kind": "confirmatory", "hyp": ["H1", "H2", "H3", "H4", "H7"]} for m in ms]
     if exp == "robust":
@@ -240,12 +246,15 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--kind", default=None, help="override registry kind (e.g. exploratory)")
+    ap.add_argument("--config", default="main", help="configuration for 'main' runs (experiments/configs/<name>.yaml)")
     a = ap.parse_args()
     cfg = fp = None
     if a.experiment != "synthetic":
-        cfg, p, _ = real_inputs()
+        cfg, p, _ = real_inputs(a.config)
         fp = study.data_fingerprint(p)
-    jobs = jobs_for(a.experiment, cfg or {}, a.methods)
+    if a.config != "main" and a.experiment != "main":
+        raise SystemExit("--config applies to 'main' runs only")
+    jobs = jobs_for(a.experiment, cfg or {}, a.methods, a.config)
     heavy = {"RF": 0, "GBM": 1}                       # longest jobs first so the pool drains evenly
     jobs.sort(key=lambda j: heavy.get(j.get("method"), 2))
     todo = [j for j in jobs if a.force or not done(j)]

@@ -75,6 +75,16 @@ def test_bma_inclusion_and_deff(small_linear):
     assert 0 < m.expected_size <= s.panel.K
 
 
+def test_bma_chunked_equals_one_pass(small_linear):
+    s, mom = small_linear
+    d = TrainData(s.panel, mom, np.arange(0, 140))
+    a = models.make("BMA").fit(d)
+    b = models.make("BMA", chunk=7).fit(TrainData(s.panel, mom, np.arange(0, 140)))
+    assert np.allclose(a.beta, b.beta, rtol=1e-10, atol=1e-14)
+    assert np.allclose(a.inclusion, b.inclusion) and np.isclose(a.expected_size, b.expected_size)
+    assert np.isclose(a.top_model_prob, b.top_model_prob)
+
+
 def test_bshrink_falls_back_to_equal_weights_without_signal(rng):
     from alphacomb.data import synthetic
     s = synthetic.make(synthetic.SyntheticConfig(n_assets=80, n_months=120, ic=0.0, seed=5))

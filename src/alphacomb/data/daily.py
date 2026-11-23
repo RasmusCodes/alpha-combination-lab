@@ -6,6 +6,7 @@ files, never the whole daily table in memory).
   beta    market beta from daily excess returns over the trailing 12 months (>= 120 days)
   sigma   daily return volatility over the trailing 3 months (>= 40 days): impact model input
   high52  month-end split-adjusted price / its maximum over the trailing 12 months (George & Hwang 2004)
+  rv1     realized volatility of daily returns within the month, annualized (>= 15 days; extension signal VRP)
   dvol    mean daily dollar volume over the trailing 3 months ($): cost and capacity input
 Every feature at month t uses daily data up to that month's last trading day only.
 """
@@ -98,6 +99,8 @@ def build(raw_dir=None, factors: pd.DataFrame | None = None, log=print) -> pd.Da
     beta = (cov / var).where((n12 >= 120) & (var > 0))
     r3 = {c: wide[c].rolling(3, min_periods=1).sum() for c in ("nr", "sr", "srr", "dv", "ndv")}
     sig = np.sqrt(((r3["srr"] - r3["sr"] ** 2 / r3["nr"]) / (r3["nr"] - 1)).clip(lower=0)).where(r3["nr"] >= 40)
+    n1 = wide["nr"]
+    rv1 = (np.sqrt(((wide["srr"] - wide["sr"] ** 2 / n1) / (n1 - 1)).clip(lower=0)) * np.sqrt(252)).where(n1 >= 15)
     dvol = (r3["dv"] / r3["ndv"]).where(r3["ndv"] >= 20)
     hi = wide["pmax"].rolling(12, min_periods=6).max()
     high52 = (wide["plast"] / hi).where(hi > 0)
@@ -106,10 +109,10 @@ def build(raw_dir=None, factors: pd.DataFrame | None = None, log=print) -> pd.Da
         return w.stack().rename(name)
 
     feats = pd.concat([long(beta, "beta"), long(sig, "sigma"), long(dvol, "dvol"), long(high52, "high52"),
-                       long(n12, "beta_days")], axis=1)
+                       long(n12, "beta_days"), long(rv1, "rv1")], axis=1)
     feats.index.names = ["month", "permno"]
     feats = feats.reset_index()
-    feats = feats[feats[["beta", "sigma", "dvol", "high52"]].notna().any(axis=1)]
+    feats = feats[feats[["beta", "sigma", "dvol", "high52", "rv1"]].notna().any(axis=1)]
     feats = feats.merge(S[["permno", "month", "ivol", "n3"]].rename(columns={"n3": "ivol_days"}),
                         on=["permno", "month"], how="outer")
     return feats.sort_values(["permno", "month"]).reset_index(drop=True)

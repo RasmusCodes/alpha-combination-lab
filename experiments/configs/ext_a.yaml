@@ -1,0 +1,37 @@
+# Signal extension (ext_a): 20 signals; panel from 1980-01-31, first forecast 1990-01-31. Same protocol as main.yaml
+# except min_train 84 and 24-month inner validation blocks (shorter windows), identical for extended and baseline
+# runs. Part of experiments/preregistration_extension.md.
+experiment: real/ext_a
+hypotheses: [H10, H11, H12]
+panel_file: panel_ext.parquet
+panel_start: "1980-01-31"
+panel_end: "2024-12-31"
+signals: [MOM, IMOM, HIGH52, STREV, LTREV, BM, EP, CFP, GPA, ROA, ACC, AG, NSI, IVOL, BETA, SEAS, REV1, REVB, SUE, DISP]
+normalization: {winsor: 0.01, method: rank_gauss, missing: zero, min_n: 20}
+walk_forward:
+  first_test: "1990-01-31"
+  last_test: "2024-11-30"
+  refit_every: 12
+  tune_every: 60
+  horizon: 1
+  embargo: 1
+  window: null
+  min_train: 84
+  inner: forward
+  inner_folds: 3
+  inner_block: 24
+  inner_embargo: 1
+  rule: best
+  importance: true
+  seed: 20261122
+methods: [EW, HEW, ICW, OLS, RIDGE, LASSO, ENET, PCR, MVO, BMA, BSHRINK, RF, GBM, DMA, REGIME, ONLINE_EG, ONLINE_RLS]
+simple_methods: [EW, HEW, ICW]
+method_params:
+  RF: {trees: 200, min_leaf: 100, bagging_fraction: 0.1, feature_fraction: 0.5, n_jobs: 2}
+  GBM: {learning_rate: 0.05, min_leaf: 200, l2: 10.0, feature_fraction: 0.8, bagging_fraction: 0.5, n_jobs: 2}
+  DMA: {lam: 0.99, alpha: 0.99}
+  BMA: {max_k: 23}
+benchmark: EW
+portfolio: {scheme: rank, quantile: 0.2}
+costs: {base_multiplier: 1.0, high_multiplier: 2.0, impact_y: 1.0, aum_grid: [1.0e+7, 1.0e+8, 1.0e+9, 1.0e+10, 1.0e+11]}
+inference: {bootstrap: 5000, block: 6, alpha: 0.05}

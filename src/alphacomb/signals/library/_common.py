@@ -6,6 +6,8 @@ import pandas as pd
 
 LIBRARY = ["MOM", "IMOM", "HIGH52", "STREV", "LTREV", "BM", "EP", "CFP", "GPA", "ROA", "ACC", "AG", "NSI",
            "IVOL", "BETA", "SEAS"]
+EXT_EARNINGS = ["REV1", "REVB", "SUE", "DISP"]        # I/B/E/S (extension)
+EXT_OPTIONS = ["IVSKEW", "IVSPREAD", "VRP"]          # OptionMetrics (extension)
 
 CRSP_MONTHLY = "crsp.msf+msedelist+msenames+msp500list"
 CRSP_DAILY = "crsp.dsf"

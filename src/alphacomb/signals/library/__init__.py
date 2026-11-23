@@ -15,4 +15,5 @@ for the real-time-availability analysis (a signal may enter a combination only a
 """
 from alphacomb.signals.library import (investment, lowrisk, momentum, quality, reversal,  # noqa: F401
                                        seasonality, value)
-from alphacomb.signals.library._common import LIBRARY  # noqa: F401
+from alphacomb.signals.library import earnings, options  # noqa: F401,E402  (extension: I/B/E/S, OptionMetrics)
+from alphacomb.signals.library._common import EXT_EARNINGS, EXT_OPTIONS, LIBRARY  # noqa: F401
