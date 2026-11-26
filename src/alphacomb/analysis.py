@@ -234,6 +234,36 @@ def breakeven_aum(cap: dict) -> float:
     return float("inf")
 
 
+def market_hedged(net: np.ndarray, mkt: np.ndarray, months: np.ndarray, window: int = 36) -> np.ndarray:
+    """Net return minus an ex-ante market hedge: beta of the method's own previous `window` monthly returns on the
+    market excess return (both indexed by formation month; the market return is the one earned the following
+    month). NaN for the first `window` months."""
+    out = np.full(len(net), np.nan)
+    for j, t in enumerate(months):
+        if j < window:
+            continue
+        past = months[j - window:j]
+        y, x = net[past], mkt[past]
+        ok = np.isfinite(y) & np.isfinite(x)
+        if ok.sum() < 24:
+            continue
+        b = np.cov(x[ok], y[ok], ddof=1)[0, 1] / np.var(x[ok], ddof=1)
+        out[t] = net[t] - b * mkt[t]
+    return out
+
+
+def vol_scaled(net: np.ndarray, months: np.ndarray, window: int = 36, target: float = 0.10) -> np.ndarray:
+    """Each month's return scaled to an ex-ante annualized volatility target (trailing `window` months), so that
+    comparing MEANS (as the SPA test does) compares Sharpe ratios."""
+    out = np.full(len(net), np.nan)
+    for j, t in enumerate(months):
+        if j < window:
+            continue
+        sd = np.nanstd(net[months[j - window:j]], ddof=1) * np.sqrt(12)
+        out[t] = net[t] * target / sd if sd > 0 else np.nan
+    return out
+
+
 # ----------------------------------------------------------------------------- E6, E4, E1
 def complexity_frame(d: Path) -> pd.DataFrame:
     rows = []

@@ -3,7 +3,8 @@
 How should a portfolio manager combine many noisy, correlated return signals? This repository is a research
 platform for that question, and a pre-registered study that uses it: seventeen combination methods, from equal
 weights to gradient boosting, Bayesian model averaging and dynamic model averaging, applied to sixteen published
-US-equity signals in the S&P 500, strictly out of sample from 1980 to 2024 and after trading costs.
+US-equity signals in the S&P 500, strictly out of sample from 1980 to 2024 and after trading costs. A second
+pre-registered test adds seven analyst (I/B/E/S) and options (OptionMetrics) signals.
 
 **Interactive demo:** [rasmuscodes.github.io/projects/alpha-combination](https://rasmuscodes.github.io/projects/alpha-combination/)
 · **Full report:** [reports/REPORT.md](reports/REPORT.md) · **Pre-registration:** [experiments/preregistration.md](experiments/preregistration.md)
@@ -26,6 +27,11 @@ US-equity signals in the S&P 500, strictly out of sample from 1980 to 2024 and a
   over time (forgetting, regime switching, model averaging) never helped either.
 - Synthetic positive controls show the methods find non-linear, regime-dependent and sparse truths when the signal
   is strong (oracle IC 0.10), and mostly cannot at realistic strength (0.03).
+- **Second pre-registered test: four analyst and three options signals.** The analyst signals raised equal
+  weighting's rank IC by about a third (1990-2024, +0.006, Holm p = 0.06), but no complex method beat equal weights
+  on the richer sets (20 signals from 1990, 23 from 2004), raw or market-hedged. After 2004 five estimated linear
+  methods did significantly worse than hedged equal weights. See [reports/extension.md](reports/extension.md) and
+  section 9 of the report.
 
 ## What is in the repository
 
@@ -40,8 +46,9 @@ src/alphacomb/
                 (Ledoit-Wolf Sharpe test, Holm/BH/Romano-Wolf, Hansen SPA, PSR/DSR, PBO, bootstrap), stability
   registry.py   append-only experiment registry (registry/experiments.jsonl)
 experiments/    pre-registration and frozen configurations
-scripts/        build_data, build_signals, run_study, run_exploratory, analyze_study, export_demo_fixtures, ...
-reports/        REPORT.md, generated results.md / exploratory.md, tables/, figures/
+scripts/        build_data, build_signals, run_study, run_exploratory, analyze_study, export_demo_fixtures,
+                pull_extension, build_extension, analyze_extension, ...
+reports/        REPORT.md, generated results.md / exploratory.md / extension.md, tables/, figures/
 demo/           the browser lab (engine.js mirrors the Python methods; tests.html checks parity)
 tests/          pytest suite (runs without licensed data)
 ```
@@ -51,7 +58,7 @@ tests/          pytest suite (runs without licensed data)
 ```
 python -m venv .venv
 .venv/Scripts/pip install -r requirements.txt      # or: pip install -e .[dev]
-pytest                                             # 39 tests, including the look-ahead test for every method
+pytest                                             # 41 tests, including the look-ahead test for every method
 ```
 
 Run a method on a synthetic panel where the truth is known:
@@ -84,6 +91,15 @@ python scripts/run_exploratory.py
 python scripts/analyze_study.py
 ```
 
+The second test also needs I/B/E/S and OptionMetrics (WRDS):
+
+```
+python scripts/pull_extension.py                  # raw tables -> data/raw/wrds_ext
+python scripts/build_extension.py                 # new signals, panel_ext.parquet, reports/data_integrity_extension.md
+python scripts/run_study.py main --config ext_a   # then ext_a_base, ext_b, ext_b_base
+python scripts/analyze_extension.py               # reports/extension.md
+```
+
 Raw files can live elsewhere (`ALPHACOMB_CRSP_RAW`). Runs are checkpointed per job and logged in the registry; an
 interrupted experiment resumes where it stopped. The main experiment took about 11 minutes on a laptop, the full set
 a few hours.
@@ -111,4 +127,4 @@ engine, nested selection, evaluation and statistics then apply unchanged.
 ## Data and licensing
 
 Only portfolio-level aggregates (monthly long-short returns, ICs, average weights) are published, in `reports/` and
-the demo. No security-level CRSP or Compustat data is included. Code: MIT licence.
+the demo. No security-level CRSP, Compustat, I/B/E/S or OptionMetrics data is included. Code: MIT licence.

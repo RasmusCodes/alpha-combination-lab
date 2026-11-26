@@ -1,0 +1,124 @@
+{
+ "a": {
+  "label": "analyst signals added, 1990-2024",
+  "months": 419,
+  "rule_met": false,
+  "hedged_winners": [],
+  "h10": {
+   "ic_diff": 0.0056,
+   "ic_t": 2.1796,
+   "p_ic_holm": 0.0586,
+   "sharpe_diff": 0.0075,
+   "p_sharpe": 0.8816,
+   "hedged_diff": -0.0263,
+   "p_hedged": 0.6858
+  },
+  "top_sharpe": {
+   "method": "MVO",
+   "diff": 0.606,
+   "p_holm": 0.205
+  },
+  "top_ic": {
+   "method": "RF",
+   "diff": 0.0115,
+   "p_holm": 0.469
+  },
+  "spa": {
+   "ic_best": "RF",
+   "ic_p": 0.052,
+   "vol_best": "MVO",
+   "vol_p": 0.263
+  },
+  "rows": [
+   {
+    "set": "16 signals",
+    "method": "EW",
+    "rank_ic": 0.0183,
+    "sharpe_net": 0.175,
+    "sharpe_hedged": 0.686
+   },
+   {
+    "set": "20 signals",
+    "method": "EW",
+    "rank_ic": 0.0239,
+    "sharpe_net": 0.182,
+    "sharpe_hedged": 0.66
+   },
+   {
+    "set": "20 signals",
+    "method": "MVO",
+    "rank_ic": 0.0276,
+    "sharpe_net": 0.788,
+    "sharpe_hedged": 0.536
+   },
+   {
+    "set": "20 signals",
+    "method": "RF",
+    "rank_ic": 0.0354,
+    "sharpe_net": 0.339,
+    "sharpe_hedged": 0.599
+   }
+  ]
+ },
+ "b": {
+  "label": "analyst and options signals added, 2004-2024",
+  "months": 251,
+  "rule_met": false,
+  "hedged_winners": [],
+  "h10": {
+   "ic_diff": 0.0048,
+   "ic_t": 1.4172,
+   "p_ic_holm": 0.1564,
+   "sharpe_diff": 0.0352,
+   "p_sharpe": 0.6238,
+   "hedged_diff": 0.1032,
+   "p_hedged": 0.3564
+  },
+  "top_sharpe": {
+   "method": "REGIME",
+   "diff": -0.02,
+   "p_holm": 1.0
+  },
+  "top_ic": {
+   "method": "RF",
+   "diff": -0.0026,
+   "p_holm": 1.0
+  },
+  "spa": {
+   "ic_best": "RF",
+   "ic_p": 1.0,
+   "vol_best": "REGIME",
+   "vol_p": 1.0
+  },
+  "rows": [
+   {
+    "set": "16 signals",
+    "method": "EW",
+    "rank_ic": 0.0126,
+    "sharpe_net": 0.083,
+    "sharpe_hedged": 0.438
+   },
+   {
+    "set": "23 signals",
+    "method": "EW",
+    "rank_ic": 0.0174,
+    "sharpe_net": 0.118,
+    "sharpe_hedged": 0.541
+   },
+   {
+    "set": "23 signals",
+    "method": "REGIME",
+    "rank_ic": 0.0135,
+    "sharpe_net": 0.098,
+    "sharpe_hedged": 0.097
+   },
+   {
+    "set": "23 signals",
+    "method": "RF",
+    "rank_ic": 0.0148,
+    "sharpe_net": -0.037,
+    "sharpe_hedged": 0.095
+   }
+  ]
+ }
+}

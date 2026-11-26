@@ -4,8 +4,10 @@
 S&P 500, 1980-2024.**
 
 Every number in this report is produced by the code in this repository. The protocol, hypotheses and decision rule
-were committed to git (`fa240f7`, `experiments/preregistration.md`) before any return-based statistic was
-computed. Tables are in `reports/tables/`, generated text in `reports/results.md` and `reports/exploratory.md`.
+were committed to git (`f924c95`, `experiments/preregistration.md`) before any return-based statistic was
+computed. A second test, adding analyst and options signals (section 9), was pre-registered the same way (`0a0ce07`,
+`experiments/preregistration_extension.md`). Tables are in `reports/tables/`, generated text in
+`reports/results.md`, `reports/exploratory.md` and `reports/extension.md`.
 
 ## Summary
 
@@ -40,6 +42,11 @@ computed. Tables are in `reports/tables/`, generated text in `reports/results.md
    closer to the real data, most of these advantages shrink to the noise across seeds.
 9. **Leakage is measurable.** Shuffled K-fold cross-validation overstated validation IC by about 0.02 against
    forward-chaining validation (t = 2.4-3.4 across the nine tuning dates). That is about half the realized IC.
+10. **More, and more different, signals did not change the answer (second pre-registered test).** Four I/B/E/S
+    analyst signals raised equal weighting's rank IC by about a third in 1990-2024 (+0.006, raw p = 0.03, Holm
+    p = 0.06). With three OptionMetrics signals added as well, the effective number of independent signals rose
+    from 10 to 14. No complex method beat equal weights on the richer sets, raw or market-hedged. After 2004, five
+    estimated linear methods did significantly worse than hedged equal weights.
 
 Bottom line for a portfolio manager: with a handful of published large-cap signals, spend the effort on the
 covariance structure, on risk (market exposure) and on trading costs, not on a more flexible forecasting model.
@@ -379,7 +386,91 @@ flexible methods (BMA, boosting, DMA) lose most when the truth is simple. The re
 
 ![Synthetic controls at IC 0.10](figures/synthetic_ratio_ic0.1.png)
 
-## 9. What this means
+## 9. A second pre-registered test: analyst and options signals
+
+The main study leaves an obvious objection: sixteen price- and accounting-based signals that behave like about ten
+may simply be too similar for a flexible model to find anything equal weighting misses. A second pre-registration
+(`experiments/preregistration_extension.md`, commit `0a0ce07`), written after the main results but before any
+return statistic of the new signals was computed, adds signals from two other information sources:
+
+| Signal | Source | Sign | Definition |
+|---|---|---|---|
+| REV1 | I/B/E/S | + | one-month change in the mean FY1 EPS forecast / price (Chan, Jegadeesh & Lakonishok 1996) |
+| REVB | I/B/E/S | + | (upward - downward FY1 revisions) / number of estimates, at least 3 |
+| SUE | I/B/E/S | + | latest quarterly surprise, actual minus last median forecast, / price (Livnat & Mendenhall 2006) |
+| DISP | I/B/E/S | - | standard deviation / abs(mean) of FY1 forecasts (Diether, Malloy & Scherbina 2002) |
+| IVSKEW | OptionMetrics | - | 30-day implied volatility, delta -20 put minus delta +50 call (Xing, Zhang & Zhao 2010) |
+| IVSPREAD | OptionMetrics | + | 30-day implied volatility, delta +50 call minus delta -50 put (Cremers & Weinbaum 2010) |
+| VRP | OptionMetrics | + | realized volatility in month t minus at-the-money 30-day implied volatility (Bali & Hovakimian 2009) |
+
+The unadjusted I/B/E/S files are used, because the standard files restate history for stock splits after the CRSP
+data end: per-share values are divided by the same-date CRSP price, and a value is left blank when CRSP shows a
+split inside the window it depends on. Analyst signals cover 88-99% of the S&P 500 universe from 1985 (SUE 92-95%
+from 1990), option signals 98-100% from 2000 (`reports/data_integrity_extension.md`, written before any return
+statistic). The new signals are partly new information. Forecast revisions correlate 0.28-0.31 with momentum and the
+52-week high, and forecast dispersion 0.23-0.33 with the low-risk and profitability signals. The volatility premium
+correlates -0.42 with idiosyncratic volatility, and the two skew signals are nearly uncorrelated with all sixteen
+(|rho| <= 0.12). The effective number of independent signals rises from 10.0 (the sixteen, 1996 onward) to 11.7
+with the analyst signals (1985 onward) and 14.1 with both (1996 onward).
+
+Each extended set is compared with the sixteen on the same months, with the main protocol (two changes for the
+shorter samples, applied to both runs: at least 84 training months and 24-month inner validation blocks):
+
+| Window | Signals | Out of sample | Months |
+|---|---|---|---|
+| A | the sixteen + four analyst = 20 | 1990-01 to 2024-11 | 419 |
+| B | the twenty + three options = 23 | 2004-01 to 2024-11 | 251 |
+
+All 68 runs (17 methods x 4 configurations) completed and are in the registry. Full output:
+`reports/extension.md` and `reports/tables/ext_*.csv`.
+
+**H10: the new signals add a little forecasting power to equal weights, and no return.**
+
+| Window | EW rank IC, 16 -> extended | Difference (NW t; Holm p) | EW net Sharpe, 16 -> extended (p) | Market-hedged (p) |
+|---|---|---|---|---|
+| A, 1990-2024 | 0.018 -> 0.024 | +0.0056 (2.18; 0.059) | 0.17 -> 0.18 (0.88) | 0.69 -> 0.66 (0.69) |
+| B, 2004-2024 | 0.013 -> 0.017 | +0.0048 (1.42; 0.156) | 0.08 -> 0.12 (0.62) | 0.44 -> 0.54 (0.36) |
+
+The analyst signals raise equal weighting's rank IC by about a third (raw p = 0.029, just above 5% after Holm over
+the two windows). None of it reaches net or hedged returns.
+
+**H11: no complex method beats equal weights on the extended sets.** In window A the largest net Sharpe gain over
+extended EW is MVO's (0.79 against 0.18, +0.61; raw p = 0.013, Holm p = 0.21, volatility-scaled SPA p = 0.26),
+followed by REGIME (+0.30), GBM (+0.29) and OLS (+0.28; Holm p >= 0.23). The largest rank IC gain is the random
+forest's (0.035 against 0.024; t = 2.18, Holm p = 0.47; SPA p = 0.052). In window B every complex method is below
+extended EW on both metrics (net Sharpe -0.02 to -0.36, rank IC -0.003 to -0.016; SPA p = 1.0). The decision rule is
+not met in either window.
+
+**H12: hedged against the market, equal weights is again as good as anything, and after 2004 better.** In window
+A, MVO's 0.79 becomes 0.54 hedged against EW's 0.66 (as in the main study, much of its gain is market exposure;
+against seven factors it keeps an alpha of 2% a year, t = 2.0, which is not part of the decision rule). No complex
+method's hedged Sharpe differs from EW's significantly (differences -0.29 to +0.02, Holm p = 1.0). In window B, OLS,
+ridge, lasso, elastic net and BMA have significantly lower hedged Sharpe ratios than EW (differences -0.51 to
+-0.64, Holm p = 0.010-0.024). Boosting, the random forest and the recursive least-squares learner are -0.45 to
+-0.67 (Holm p = 0.07-0.08).
+
+**Did richer information help the complex methods more than equal weights? No.** Comparing each method's gain over
+EW in the extended run with its gain in the sixteen-signal run (descriptive): the rank IC edge shrank for 11 of the
+14 complex methods in both windows. The net Sharpe gap moved slightly toward the complex methods (-0.01 to +0.17),
+not enough to change any conclusion.
+
+**What the models used.** Permutation importance (the drop in out-of-sample rank IC when one family's values are
+shuffled across stocks within a month): in window A the earnings family matters most for 16 of the 17 methods
+(HEW, which caps each family's weight, leans on seasonality). In window B the options family matters most for 9 of
+the 14 complex methods, but adds little to EW (0.0009 against 0.0065 for earnings). The estimated models leaned on
+the options signals and still forecast worse than EW.
+
+**Subperiods** (descriptive; the main study's boundaries, cut to each window). The complex methods' advantage is
+again concentrated early. In window A in 1990-99 most estimated methods reach a net Sharpe ratio near or above 1.0
+(MVO 1.68) against EW's 0.28. From 2015 the best is REGIME at 0.30 against EW's 0.06, inside a sampling error of
+about +-0.6. In window B only MVO (0.27) and REGIME (0.20) edge past EW (0.19) in 2004-14, and in 2015-24 every
+method is between -0.32 and +0.05.
+
+Window B's 251 months give little power (the pre-registration noted that it detects only about 1.3 times larger
+Sharpe differences than the main study), so its null on H11 alone is weak evidence. But its point estimates all
+favour equal weights, and the hedged results in both windows match the main study's.
+
+## 10. What this means
 
 1. **Count your signals honestly.** Sixteen published signals carry about ten independent views; family-level equal
    weighting (HEW) forecasts better than signal-level equal weighting (+0.004 IC, t = 2.8) for that reason alone.
@@ -393,11 +484,16 @@ flexible methods (BMA, boosting, DMA) lose most when the truth is simple. The re
    or model averaging to track.
 5. **Costs and decay decide the economics.** The more flexible the model, the more it trades. After 2015 none of
    the signals, combined any way, paid for its trading.
+6. **New information sources are worth adding, but to the simple combination.** Analyst revisions carried real
+   information that the price and accounting signals lacked, and equal weighting captured it. Giving the flexible
+   methods more, and less correlated, inputs did not give them an edge.
 
-## 10. Limitations
+## 11. Limitations
 
-- **Large caps, monthly, sixteen signals.** Machine-learning gains are documented to be larger among small stocks
-  and with hundreds of characteristics (Gu, Kelly & Xiu 2020); this study says nothing about that setting.
+- **Large caps, monthly, sixteen to twenty-three signals.** Machine-learning gains are documented to be larger among
+  small stocks and with hundreds of characteristics (Gu, Kelly & Xiu 2020); this study says nothing about that
+  setting.
+- **Shorter extension windows.** I/B/E/S and OptionMetrics coverage limits the second test to 419 and 251 months.
 - **Signal selection has hindsight.** The signals are ones known to have worked. E5 removes signals not yet
   published, but not the bias of publication itself.
 - **Costs are an assumed schedule**, not measured trades; capacity uses a stylized impact model and one day of
@@ -408,7 +504,7 @@ flexible methods (BMA, boosting, DMA) lose most when the truth is simple. The re
   hoc and should be read as explanations, not tests.
 - **Early Compustat** (1960s-70s) carries some back-filling; the out-of-sample period starts in 1980.
 
-## 11. Reproducibility
+## 12. Reproducibility
 
 ```
 python scripts/build_data.py [--pull]        # CRSP/Compustat (WRDS) -> data/processed/
@@ -417,21 +513,32 @@ python scripts/run_study.py synthetic        # E1
 python scripts/run_study.py main             # E2   (also: robust, leakage, realtime, complexity)
 python scripts/run_exploratory.py            # X1-X3
 python scripts/analyze_study.py              # tables, figures, results.md, demo data
-pytest                                       # 39 tests; data-dependent checks need the processed files
+
+python scripts/pull_extension.py             # I/B/E/S and OptionMetrics (WRDS) -> data/raw/wrds_ext/
+python scripts/build_extension.py            # the seven new signals, panel_ext.parquet, integrity report
+python scripts/run_study.py main --config ext_a        # and ext_a_base, ext_b, ext_b_base
+python scripts/analyze_extension.py          # reports/extension.md, tables/ext_*, demo summary
+
+pytest                                       # 41 tests; data-dependent checks need the processed files
 ```
 
 `registry/experiments.jsonl` records every run (config, its hash, git commit, data fingerprint, status, summary):
-133 distinct completed real-data configurations, plus the synthetic development runs. The browser demo's engine
-is checked against the Python library (`demo/tests.html`: 29 parity checks, weights and forecasts agree to about
-1e-12).
+201 distinct completed real-data configurations (133 for the main study, 68 for the extension), plus the synthetic
+development runs. The browser demo's engine is checked against the Python library (`demo/tests.html`: 29 parity
+checks, weights and forecasts agree to about 1e-12).
 
-## 12. Deviations from the pre-registration
+The public history was rewritten on 2026-11-26 (commit messages only; file contents, authors and dates are
+unchanged), which gave the first four commits new hashes. The append-only registry keeps the original ones:
+`fa240f7` = `f924c95` (pre-registration), `b9bbab5` = `f420780`, `f92dfea` = `6d79b1e`, `fd7edda` = `0a0ce07`
+(extension pre-registration).
+
+## 13. Deviations from the pre-registration
 
 1. **Regime definition, before any results.** The volatility regime was first defined against an expanding median.
    Because market volatility trended up after the calm 1960s, that labelled 68% of months "high", so a rolling
    ten-year median was adopted. This happened during the data build, before the pre-registration commit, and is
    recorded in `evaluation/regimes.py`.
-2. **Runner fixes with no effect on results.** The main run started from `fa240f7` with a change that only ordered
+2. **Runner fixes with no effect on results.** The main run started from `f924c95` with a change that only ordered
    the jobs (registry: dirty tree). A bug in the synthetic job list made the first synthetic launch fail at start;
    it was fixed and rerun.
 3. **Out-of-memory failures.** On the shared machine, two real-time jobs and one robustness pool failed (logged as
@@ -441,19 +548,29 @@ is checked against the Python library (`demo/tests.html`: 29 parity checks, weig
 5. **Exploratory analyses X1-X3 and capacity by era** were added after the confirmatory results and are labelled.
    Their runs are counted in the DSR.
 
+Second test (`0a0ce07`):
+
+6. **None in the runs.** All 68 runs started from the pre-registration commit and completed on the first attempt.
+   The registry marks the tree as dirty because the registry file is itself tracked and each run appends to it.
+7. **The subperiod table** (pre-registered as descriptive) was missing from the first version of
+   `scripts/analyze_extension.py` and was added after the confirmatory results, using the main study's boundaries
+   cut to each window. The rerun reproduced every other number exactly (all bootstrap seeds are fixed).
+
 ## References
 
 Ang, Hodrick, Xing & Zhang (2006), JF. Bailey & López de Prado (2014), Journal of Portfolio Management (deflated
-Sharpe ratio). Bailey, Borwein, López de Prado & Zhu (2017), Journal of Computational Finance (PBO). Basu (1977), JF.
-Benjamini & Hochberg (1995), JRSS B. Cooper, Gulen & Schill (2008), JF. Cooper, Gutierrez & Hameed (2004), JF.
-De Bondt & Thaler (1985), JF. DeMiguel, Garlappi & Uppal (2009), RFS. Fama & French (1992), JF. Frazzini &
+Sharpe ratio). Bailey, Borwein, López de Prado & Zhu (2017), Journal of Computational Finance (PBO). Bali &
+Hovakimian (2009), Management Science. Basu (1977), JF. Benjamini & Hochberg (1995), JRSS B. Chan, Jegadeesh &
+Lakonishok (1996), JF. Cooper, Gulen & Schill (2008), JF. Cooper, Gutierrez & Hameed (2004), JF. Cremers & Weinbaum
+(2010), JFQA. De Bondt & Thaler (1985), JF. DeMiguel, Garlappi & Uppal (2009), RFS. Diether, Malloy & Scherbina
+(2002), JF. Fama & French (1992), JF. Frazzini &
 Pedersen (2014), JFE. George & Hwang (2004), JF. Grinold & Kahn (2000), Active Portfolio Management. Gu, Kelly & Xiu
 (2020), RFS. Hansen (2005), JBES. Haugen & Baker (1996), JFE. Heston & Sadka (2008), JFE. Holm (1979), Scandinavian
 Journal of Statistics. Jegadeesh (1990), JF. Jegadeesh & Titman (1993), JF. Jones (2002), working paper, Columbia.
 Koop & Korobilis (2012), International Economic Review. Lakonishok, Shleifer & Vishny (1994), JF. Ledoit & Wolf
 (2004), Journal of Multivariate Analysis; (2008), Journal of Empirical Finance. Ley & Steel (2009), Journal of
-Applied Econometrics. López de Prado (2018), Advances in Financial Machine Learning. McLean & Pontiff (2016), JF.
+Applied Econometrics. Livnat & Mendenhall (2006), Journal of Accounting Research. López de Prado (2018), Advances in Financial Machine Learning. McLean & Pontiff (2016), JF.
 Moskowitz & Grinblatt (1999), JF. Newey & West (1987), Econometrica. Novy-Marx (2013), JFE. Politis & Romano (1994),
 JASA. Pontiff & Woodgate (2008), JF. Raftery, Kárný & Ettler (2010), Technometrics. Romano & Wolf (2005),
 Econometrica. Rosenberg, Reid & Lanstein (1985), Journal of Portfolio Management. Shumway (1997), JF. Sloan (1996),
-The Accounting Review. Zellner (1986), in Bayesian Inference and Decision Techniques.
+The Accounting Review. Xing, Zhang & Zhao (2010), JFQA. Zellner (1986), in Bayesian Inference and Decision Techniques.

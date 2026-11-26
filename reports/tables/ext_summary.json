@@ -1,0 +1,66 @@
+{
+ "a": {
+  "label": "analyst signals added, 1990-2024",
+  "months": 419,
+  "rule_met": false,
+  "sharpe_holm_winners": [],
+  "ic_holm_winners": [],
+  "spa_ic": {
+   "stat": 2.1788415130821734,
+   "p_consistent": 0.052,
+   "p_lower": 0.0476,
+   "p_upper": 0.052,
+   "best_index": 8,
+   "best": "RF"
+  },
+  "spa_net_raw": {
+   "stat": 0.9986736236025652,
+   "p_consistent": 0.4038,
+   "p_lower": 0.354,
+   "p_upper": 0.4038,
+   "best_index": 5,
+   "best": "MVO"
+  },
+  "spa_vol": {
+   "stat": 1.4307675789394503,
+   "p_consistent": 0.2628,
+   "p_lower": 0.2406,
+   "p_upper": 0.2628,
+   "best_index": 5,
+   "best": "MVO"
+  },
+  "hedged_winners": []
+ },
+ "b": {
+  "label": "analyst and options signals added, 2004-2024",
+  "months": 251,
+  "rule_met": false,
+  "sharpe_holm_winners": [],
+  "ic_holm_winners": [],
+  "spa_ic": {
+   "stat": 0.0,
+   "p_consistent": 1.0,
+   "p_lower": 1.0,
+   "p_upper": 1.0,
+   "best_index": 8,
+   "best": "RF"
+  },
+  "spa_net_raw": {
+   "stat": 0.0,
+   "p_consistent": 1.0,
+   "p_lower": 1.0,
+   "p_upper": 1.0,
+   "best_index": 11,
+   "best": "REGIME"
+  },
+  "spa_vol": {
+   "stat": 0.0,
+   "p_consistent": 1.0,
+   "p_lower": 1.0,
+   "p_upper": 1.0,
+   "best_index": 11,
+   "best": "REGIME"
+  },
+  "hedged_winners": []
+ }
+}
